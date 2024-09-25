@@ -70,60 +70,6 @@ std::vector<std::pair<polynomialFunc, polynomialCoefficients>> generatePolynomia
 }
 
 
-BigInt tonelliShanks(const BigInt& number, const BigInt& prime) {
-    if(!isQuadraticResidue(number, prime)) {
-        std::cerr << "Not a quadratic residue" << std::endl;
-        return BigInt("-1");
-    }
-
-    BigInt q = prime - BigInt(1);
-    long s = 0;
-    while((q % BigInt(2)) == BigInt(0)) {
-        q /= BigInt(2);
-        s++;
-    }
-
-    BigInt z;
-    for(z = BigInt(1); z < prime; ++z) {
-        if(!isQuadraticResidue(z, prime)) {
-            break;
-        }
-    }
-
-
-    BigInt m = s;
-    BigInt c = BigInt::exp(z, q, prime);
-    BigInt t = BigInt::exp(number, q, prime);
-    BigInt r = BigInt::exp(number, (BigInt(1) + q) / BigInt(2), prime);
-
-    while(t != BigInt(0) && t != BigInt(1)) {
-        auto exponent = BigInt(1);
-        BigInt i;
-
-        for(i = BigInt(1); i < m; ++i) {
-            exponent *= BigInt(2);
-
-            if(BigInt::exp(t, exponent, prime) == BigInt(1)) {
-                break;
-            }
-        }
-
-
-        exponent = BigInt::exp(BigInt(2), m - i - BigInt(1), BigInt(0));
-        BigInt b = BigInt::exp(c, exponent, prime);
-        m = i;
-
-        c = (b * b) % prime;
-        t *= c;
-        t %= prime;
-        r *= b;
-        r %= prime;
-    }
-
-    if(t == BigInt(0)) return {0};
-    return r;
-}
-
 /**
  *
  * @return Pairs of values x and y, where x^2=y (mod number)

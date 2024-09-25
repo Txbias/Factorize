@@ -11,3 +11,5 @@ bool isQuadraticResidue(const BigInt& number, const BigInt& prime);
 
 // first 1000 primes
 inline std::vector<BigInt> primes1000 = generatePrimes(7920);
+
+BigInt tonelliShanks(const BigInt& number, const BigInt& prime);

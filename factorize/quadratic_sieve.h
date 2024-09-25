@@ -5,7 +5,6 @@
 
 #include "big_int.h"
 
-//typedef BigInt (* polynomialFunc)(const BigInt &number, const BigInt &input);
 using polynomialFunc = std::function<BigInt(const BigInt&, const BigInt&)>;
 using polynomialCoefficients = std::pair<BigInt, BigInt>;
 
@@ -15,8 +14,6 @@ BigInt basicPolynomial(const BigInt& number, const BigInt& input);
 std::vector<std::pair<polynomialFunc, polynomialCoefficients>> generatePolynomials(int amount, const BigInt &number);
 
 bool isQuadraticResidue(const BigInt& number, const BigInt& prime);
-
-BigInt tonelliShanks(const BigInt& number, const BigInt& prime);
 
 std::vector<std::pair<BigInt, BigInt>> sievePolynomial(const std::pair<polynomialFunc, polynomialCoefficients> &polynomial,
                                                        const std::vector<BigInt> &factorBase,
