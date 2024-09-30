@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "quadratic_sieve.h"
+#include "utils.h"
 
 
 TEST(QuadraticSieveTest, isQuadraticResidueTest) {
