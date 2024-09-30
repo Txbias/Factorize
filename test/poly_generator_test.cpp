@@ -1,0 +1,77 @@
+#include "gtest/gtest.h"
+#include "poly_generator.h"
+
+#include "utils.h"
+
+TEST(PolyGeneratorTest, basic) {
+    const auto number = BigInt(291);
+    const std::vector<BigInt> basePrimes = {5, 7, 11};
+
+    PolyGenerator generator(number, basePrimes, basePrimes);
+
+    std::vector<Polynomial> res;
+    while(generator.hasNext()) {
+        res.emplace_back(generator.next());
+    }
+
+    ASSERT_EQ(res.size(), 4);
+
+    for(auto & re : res) {
+        ASSERT_EQ(re.a, 385);
+    }
+
+    ASSERT_EQ(res[0].b, 334);
+    ASSERT_EQ(res[1].b, 26);
+    ASSERT_EQ(res[2].b, -194);
+    ASSERT_EQ(res[3].b, 114);
+}
+
+TEST(PolyGeneratorTest, a) {
+
+    const auto number = BigInt(291);
+    const std::vector<BigInt> basePrimes = {5, 7, 11, 19, 29};
+    const std::vector<BigInt> factorBase = {17, 41, 47, 61, 67, 73};
+
+    for(const auto &pr : basePrimes) {
+        ASSERT_TRUE(isQuadraticResidue(number, pr));
+    }
+
+    for(const auto &pr : factorBase) {
+        ASSERT_TRUE(isQuadraticResidue(number, pr));
+    }
+
+
+    PolyGenerator generator(number, basePrimes, factorBase);
+
+    std::vector<BigInt> lastSolutions(factorBase.size(), -1);
+
+    while(generator.hasNext()) {
+        auto polynomial = generator.next();
+        ASSERT_EQ(polynomial.a, 212135);
+        BigInt b = polynomial.b;
+
+        auto nextSolutions = generator.nextSolutions(lastSolutions, polynomial);
+
+        for(int i = 0; i < factorBase.size(); i++) {
+
+            auto sol = tonelliShanks(number, factorBase[i]);
+            auto solI = sol - b;
+            auto aInv = BigInt::modInverse(polynomial.a, factorBase[i]);
+            ASSERT_TRUE(aInv >= 0);
+            solI *= aInv;
+            solI %= factorBase[i];
+
+            ASSERT_EQ(polynomial(solI) % factorBase[i], 0);
+
+            if(lastSolutions[i] == -1) {
+                lastSolutions[i] = solI;
+                continue;
+            }
+
+            ASSERT_EQ(nextSolutions[i], solI);
+            ASSERT_EQ(polynomial(nextSolutions[i]) % factorBase[i], 0);
+            lastSolutions[i] = solI;
+        }
+    }
+
+}
