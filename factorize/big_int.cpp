@@ -509,17 +509,16 @@ long long smallDivide(const BigInt &lhs, const BigInt &rhs) {
     return result;
 }
 
-BigInt &BigInt::operator/=(const BigInt &rhs) {
+BigInt &BigInt::operator/=(BigInt rhs) {
+    const bool sign = isPositive() == rhs.isPositive();
 
-    if(isPositive() == rhs.isPositive()) {
-        if(isPositive() && *this < rhs) {
-            *this = BigInt(0);
-            return *this;
-        }
-        if(!isPositive() && *this > rhs) {
-            *this = BigInt(0);
-            return *this;
-        }
+    // calculations are done with the absolute values
+    setSign(true);
+    rhs.setSign(true);
+
+    if(*this < rhs) {
+        *this = BigInt(0);
+        return *this;
     }
 
     if(getDigits() == rhs.getDigits()) {
@@ -531,7 +530,7 @@ BigInt &BigInt::operator/=(const BigInt &rhs) {
 
     int index = rhs.getDigits().size();
 
-    BigInt newDigits = BigInt(getDigits().substr(0, index));
+    auto newDigits = BigInt(getDigits().substr(0, index));
     index--;
 
     while(index < getDigits().size()) {
@@ -548,7 +547,7 @@ BigInt &BigInt::operator/=(const BigInt &rhs) {
 
         newDigits = BigInt(std::move(digits));
         const long long cnt = smallDivide(newDigits, rhs);
-        newDigits = newDigits - abs(rhs) * BigInt(cnt);
+        newDigits = newDigits - rhs * BigInt(cnt);
 
 
         resultDigits += std::to_string(cnt);
@@ -557,11 +556,8 @@ BigInt &BigInt::operator/=(const BigInt &rhs) {
 
     digits = std::move(resultDigits);
 
-    if(isPositive() != rhs.isPositive()) {
-        setSign(false);
-    } else {
-        setSign(true);
-    }
+    // Set sign to expected value
+    setSign(sign);
 
     return *this;
 }
@@ -581,6 +577,10 @@ BigInt &BigInt::operator%=(const BigInt &rhs) {
 BigInt operator%(const BigInt &lhs, const BigInt &rhs) {
     if(rhs == 0) return lhs;
     BigInt res = lhs - rhs * (lhs/rhs);
+    if(!res.isPositive()) {
+        // Make result positive
+        res += ((res/rhs) + BigInt(1)) * rhs;
+    }
     return std::move(res);
 }
 

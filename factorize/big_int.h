@@ -29,7 +29,7 @@ public:
     BigInt& operator*=(const BigInt &rhs);
 
     friend BigInt operator/(BigInt lhs, const BigInt &rhs);
-    BigInt& operator/=(const BigInt &rhs);
+    BigInt& operator/=(BigInt rhs);
 
     friend BigInt operator%(const BigInt &lhs, const BigInt &rhs);
     BigInt& operator%=(const BigInt &rhs);

@@ -301,6 +301,12 @@ TEST_F(BigIntTest, divisionTest) {
     res = BigInt(3) / BigInt(1);
     ASSERT_EQ(res.getDigits(), "3");
     ASSERT_TRUE(res.isPositive());
+
+    res = BigInt(1) / BigInt(123123);
+    ASSERT_EQ(res.getDigits(), "0");
+
+    res = BigInt(-2) / BigInt(12);
+    ASSERT_EQ(res.getDigits(), "0");
 }
 
 TEST_F(BigIntTest, moduloTest) {
@@ -334,9 +340,22 @@ TEST_F(BigIntTest, moduloTest) {
             long long resNum = i % j;
             res = BigInt(i) % BigInt(j);
             ASSERT_EQ(res.getDigits(), std::to_string(resNum));
-            ASSERT_EQ(res.isPositive(), resNum >= 0);
+            ASSERT_TRUE(res.isPositive());
         }
     }
+
+
+    res = BigInt(-2) % BigInt(12);
+    ASSERT_EQ(res.getDigits(), "10");
+    ASSERT_TRUE(res.isPositive());
+
+    res = BigInt(-123932) % BigInt(221);
+    ASSERT_EQ(res.getDigits(), "49");
+    ASSERT_TRUE(res.isPositive());
+
+    res = BigInt(-1) % BigInt("123123123");
+    ASSERT_EQ(res.getDigits(), "123123122");
+    ASSERT_TRUE(res.isPositive());
 
 }
 
