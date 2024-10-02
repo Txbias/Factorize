@@ -435,3 +435,12 @@ TEST_F(BigIntTest, modInverseTest) {
 
 }
 
+TEST_F(BigIntTest, longCastTest) {
+
+    const auto sm = static_cast<long long>(small);
+    ASSERT_EQ(sm, 1234);
+
+    const auto negSm = static_cast<long long>(negative);
+    ASSERT_EQ(negSm, -1234);
+}
+

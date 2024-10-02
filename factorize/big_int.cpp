@@ -59,7 +59,7 @@ void BigInt::setSign(bool sign) {
 
 BigInt::operator long long() const {
     assert(*this <= BigInt(INT64_MAX));
-    return std::stoll(digits);
+    return positive ? std::stoll(digits) : -std::stoll(digits);
 }
 
 
