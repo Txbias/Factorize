@@ -48,7 +48,7 @@ std::vector<BigInt> generateFactorBase(const long long amount, const BigInt& num
     std::vector<BigInt> factorBase;
 
     for(const auto & prime : primes) {
-        if(prime != 2 && isQuadraticResidue(number, prime)) {
+        if(isQuadraticResidue(number, prime)) {
             factorBase.emplace_back(prime);
         }
     }
@@ -56,6 +56,7 @@ std::vector<BigInt> generateFactorBase(const long long amount, const BigInt& num
 }
 
 bool isQuadraticResidue(const BigInt& number, const BigInt& prime) {
+    if(prime == BigInt(2)) return true;
     const BigInt exponent = (prime - 1) / 2;
 
     BigInt res = BigInt::exp(number, exponent, prime);
