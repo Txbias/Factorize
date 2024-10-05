@@ -3,7 +3,7 @@
 #include "big_int.h"
 
 
-void runFactorization(const BigInt &num);
+void runFactorization(const BigInt &number);
 
 Number preprocessNumber(const BigInt &num);
 

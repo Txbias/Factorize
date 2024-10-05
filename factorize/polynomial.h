@@ -17,7 +17,5 @@ public:
     }
 
     const BigInt a, b;
-
-private:
     const BigInt number;
 };

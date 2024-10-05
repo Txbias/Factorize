@@ -20,7 +20,7 @@ public:
      * @param polynomial Polynomial to be solved. Needs to be the Polynomial the latest next()
      *                   call returned
      */
-    [[nodiscard]] std::vector<BigInt> nextSolutions(const std::vector<BigInt> &lastSolutions,
+    [[nodiscard]] std::vector<std::pair<BigInt, BigInt>> findSolutions(const std::vector<std::pair<BigInt, BigInt>> &lastSolutions,
                                                    const Polynomial &polynomial) const;
 
     [[nodiscard]] bool hasNext() const;
@@ -34,5 +34,5 @@ private:
     std::vector<std::vector<BigInt>> addFactors;
     std::vector<BigInt> factorBase;
 
-    long long counter = 1;
+    long long counter = 0;
 };

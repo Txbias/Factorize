@@ -1,146 +1,17 @@
 #include "quadratic_sieve.h"
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
 #include <set>
 #include <functional>
+#include <random>
 
 #include "big_int.h"
-#include "utils.h"
 
 #include <vector>
 
 
-
-
-BigInt basicPolynomial(const BigInt& number, const BigInt& input) {
-    auto result = BigInt::ceilSqrt(number);
-    result += input;
-    result *= result;
-    result -= number;
-    return std::move(result);
-}
-
-BigInt polynomial(const BigInt& a, const BigInt& b, const BigInt &number, const BigInt &input) {
-    BigInt res = a * input + b;
-    res *= res;
-    res -= number;
-    return std::move(res);
-}
-
-std::vector<std::pair<polynomialFunc, polynomialCoefficients>> generatePolynomials(const int amount,
-                                                                                   const BigInt &number) {
-
-    std::vector<std::pair<polynomialFunc, polynomialCoefficients>> polynomials;
-    polynomials.reserve(amount);
-
-    assert(primes1000.size() == 1000);
-    assert(amount <= 1000);
-
-    int primeIndex = 1;
-    for(int i = 0; i < amount; ++i) {
-        while(!isQuadraticResidue(number, primes1000[primeIndex])) {
-            primeIndex++;
-            assert(primeIndex < 1000);
-        }
-        const BigInt& A = primes1000[primeIndex++];
-        BigInt B = tonelliShanks(number, A);
-        if(B < BigInt(0)) {
-            B += A;
-        }
-        assert(A > 1);
-        assert(B > 0);
-        B += (BigInt::ceilSqrt(number)/A) * A;
-        B += A;
-        if(((B*B) % A) != (number % A)) {
-            std::cerr << "B is not a square mod A" << std::endl;
-        }
-
-        std::pair<polynomialFunc, polynomialCoefficients> poly;
-        poly.second.first = A;
-        poly.second.second = B;
-        poly.first = [A, B](const BigInt &num, const BigInt &input) {
-            return polynomial(A, B, num, input);
-        };
-
-        polynomials.push_back(std::move(poly));
-    }
-
-    return polynomials;
-}
-
-
-/**
- *
- * @return Pairs of values x and y, where x^2=y (mod number)
- */
-std::vector<std::pair<BigInt, BigInt>> sievePolynomial(const std::pair<polynomialFunc, polynomialCoefficients> &polynomial,
-                                                       const std::vector<BigInt> &factorBase,
-                                                       const BigInt &number) {
-    constexpr int amount = 50000;
-
-    std::vector<BigInt> sieve(amount);
-    std::vector<BigInt> polynomialValues(amount);
-
-    BigInt A = polynomial.second.first;
-    BigInt B = polynomial.second.second;
-
-    for(int i  = 0; i < amount; ++i) {
-        sieve[i] = polynomial.first(number, i);
-
-        assert(sieve[i] >= 0);
-        polynomialValues[i] = sieve[i];
-    }
-
-    for(const BigInt &prime : factorBase) {
-        BigInt solution = tonelliShanks(number, prime);
-        assert(solution >= 0);
-        BigInt solution2 = solution * BigInt(-1);
-        solution2 += prime;
-        solution2 %= prime;
-
-        const BigInt aInv = BigInt::modInverse(A, prime);
-
-        solution = (solution - B) * aInv;
-        solution2 = (solution2 - B) * aInv;
-
-        solution += ((1 + BigInt::abs(solution/prime)) * prime);
-        solution2 += ((1 + BigInt::abs(solution2/prime)) * prime);
-
-        solution %= prime;
-        solution2 %= prime;
-
-        assert(solution >= 0);
-        assert(solution >= 0);
-
-        for(auto i = static_cast<long long>(solution); i < sieve.size(); i+=static_cast<long long>(prime)) {
-            assert((sieve[i] % prime) == 0);
-            sieve[i] /= prime;
-        }
-
-        assert(solution != solution2);
-
-        for(auto i = static_cast<long long>(solution2); i < sieve.size(); i+=static_cast<long long>(prime)) {
-            assert((sieve[i] % prime) == 0);
-            sieve[i] /= prime;
-        }
-    }
-
-    std::vector<std::pair<BigInt, BigInt>> result;
-
-    const BigInt root = BigInt::sqrt(number);
-    for(int i = 0; i < amount; ++i) {
-        if(sieve[i] == 1) {
-
-            BigInt x = A*i + B;
-            BigInt y = x*x - number;
-
-            result.emplace_back(x, y);
-        }
-    }
-
-    return std::move(result);
-}
 
 /**
  * Computes the prime factorization of a number.
@@ -250,4 +121,91 @@ std::pair<BigInt, BigInt> computeSquareCongruence(const std::set<int> &square,
     }
 
     return std::make_pair(std::move(square1), std::move(square2));
+}
+
+
+std::vector<BigInt> sieveSolution(const BigInt &prime, const BigInt &solution, const long long range,
+                   std::vector<BigInt> sieve) {
+
+    const long long multiplier = (-range - static_cast<long long>(solution)) / static_cast<long long>(prime);
+    BigInt index = solution + multiplier*prime;
+    assert(BigInt::abs(index) <= range);
+    while(index < range) {
+        sieve[static_cast<long long>(index)+ range] += BigInt::log2(prime);
+        index += prime;
+    }
+
+    return std::move(sieve);
+}
+
+
+std::vector<std::pair<BigInt, BigInt>> sievePolynomial(const Polynomial& polynomial,
+                                                 const std::vector<std::pair<BigInt, BigInt>> &solutions,
+                                                 const std::vector<BigInt> &factorBase,
+                                                 const long long sieveRange) {
+
+    std::vector<BigInt> sieve(2*sieveRange+1, 0);
+
+    for(int i = 0; i < solutions.size(); ++i) {
+
+        BigInt sol1 = solutions[i].first;
+        BigInt sol2 = solutions[i].second;
+
+        if(sol1 == sol2 && sol1 == factorBase[i]) {
+            // factorBase[i] is a base prime, skipping
+            continue;
+        }
+
+        sieve = sieveSolution(factorBase[i], sol1, sieveRange, std::move(sieve));
+
+        if(sol1 != sol2) sieve = sieveSolution(factorBase[i], sol2, sieveRange, std::move(sieve));
+    }
+
+    std::vector<std::pair<BigInt, BigInt>> result;
+
+    const BigInt root = BigInt::sqrt(polynomial.number);
+    for(int i = 0; i < sieve.size(); ++i) {
+        BigInt cutoff = 1;
+        if(i != 0) cutoff = BigInt::log2(2*BigInt::abs(i-sieveRange)*root);
+        cutoff *= 2;
+        cutoff /= 3;
+        if(sieve[i] < cutoff) continue;
+
+        auto polyVal = polynomial(i-sieveRange);
+        for(int j = 0; j < factorBase.size(); ++j) {
+            if((polyVal % factorBase[j]) == 0) {
+                polyVal /= factorBase[j];
+            }
+        }
+
+        if(polyVal == 1) {
+            BigInt x = polynomial.a * (i-sieveRange) + polynomial.b;
+            BigInt y = x*x - polynomial.number;
+            result.emplace_back(x, y);
+        }
+    }
+
+    return std::move(result);
+
+}
+
+std::vector<BigInt> selectBasePrimes(const BigInt &number, std::vector<BigInt> factorBase, long long sieveRange) {
+
+    BigInt product = 1;
+    const BigInt target = BigInt::sqrt(BigInt(2)*number);
+    std::vector<BigInt> basePrimes;
+
+    static auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    static std::default_random_engine rng(seed);
+
+    std::shuffle(factorBase.begin(), factorBase.end(), rng);
+
+    for(int i = 0; i < factorBase.size(); ++i) {
+        if(factorBase[i] < 1000 || factorBase[i] > 3000) continue;
+        if(product * factorBase[i] <= target) {
+            product *= factorBase[i];
+            basePrimes.emplace_back(factorBase[i]);
+        }
+    }
+    return std::move(basePrimes);
 }

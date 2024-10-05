@@ -61,6 +61,7 @@ Polynomial PolyGenerator::next() {
         }
         b %= a;
         counter = 1;
+        assert(((b*b) % a) == (number % a));
         return {a, b, number};
     }
 
@@ -78,14 +79,15 @@ Polynomial PolyGenerator::next() {
     b += multiplier * BValues[mu];
 
     counter++;
+    assert(((b*b) % a) == (number % a));
     return {a, b, number};
 }
 
 
-std::vector<BigInt> PolyGenerator::nextSolutions(const std::vector<BigInt> &lastSolutions,
+std::vector<std::pair<BigInt, BigInt>> PolyGenerator::findSolutions(const std::vector<std::pair<BigInt, BigInt>> &lastSolutions,
                                                 const Polynomial &polynomial) const {
 
-    std::vector<BigInt> solutions(factorBase.size());
+    std::vector<std::pair<BigInt, BigInt>> solutions(factorBase.size());
 
     const long long mu = __builtin_ctz((counter - 1) & -(counter - 1));
     // calculates ceil((counter - 1)/2^(mu))
@@ -97,20 +99,36 @@ std::vector<BigInt> PolyGenerator::nextSolutions(const std::vector<BigInt> &last
     }
 
     for(int i = 0; i < factorBase.size(); ++i) {
-        if(lastSolutions[i] == BigInt(-1)) {
+        if(lastSolutions.empty() || lastSolutions[i].first == BigInt(-1)) {
             // Needs to be solved from scratch
-            BigInt sol = tonelliShanks(number, factorBase[i]);
-            sol -= polynomial.b;
-            sol *= BigInt::modInverse(polynomial.a, factorBase[i]);
-            solutions[i] = sol;
+            const BigInt root = tonelliShanks(number, factorBase[i]);
+            const BigInt aInv = BigInt::modInverse(polynomial.a, factorBase[i]);
+            BigInt sol1 = root;
+            sol1 -= polynomial.b;
+            sol1 *= aInv;
+            sol1 %= factorBase[i];
+
+            BigInt sol2 = (root * BigInt(-1)) - polynomial.b;
+            sol2 *= aInv;
+            sol2 %= factorBase[i];
+
+            assert((polynomial(sol1) % factorBase[i]) == 0);
+            assert((polynomial(sol2) % factorBase[i]) == 0);
+
+            solutions[i] = {sol1, sol2};
             continue;
         }
 
-        BigInt res = addFactors[i][mu] * multiplier;
+        BigInt addFactor = addFactors[i][mu] * multiplier;
 
-        res += lastSolutions[i];
-        res %= factorBase[i];
-        solutions[i] = res;
+        BigInt sol1 = (lastSolutions[i].first + addFactor) % factorBase[i];
+        BigInt sol2 = (lastSolutions[i].second + addFactor) % factorBase[i];
+
+        assert(polynomial(sol1) % factorBase[i] == 0);
+        assert(polynomial(sol2) % factorBase[i] == 0);
+
+
+        solutions[i] = {sol1, sol2};
     }
     return std::move(solutions);
 }
