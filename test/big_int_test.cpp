@@ -307,6 +307,10 @@ TEST_F(BigIntTest, divisionTest) {
 
     res = BigInt(-2) / BigInt(12);
     ASSERT_EQ(res.getDigits(), "0");
+
+    res = BigInt(-2) / BigInt(2);
+    ASSERT_EQ(res.getDigits(), "1");
+    ASSERT_FALSE(res.isPositive());
 }
 
 TEST_F(BigIntTest, moduloTest) {
@@ -357,6 +361,8 @@ TEST_F(BigIntTest, moduloTest) {
     ASSERT_EQ(res.getDigits(), "123123122");
     ASSERT_TRUE(res.isPositive());
 
+    res = BigInt(-2) % BigInt(2);
+    ASSERT_EQ(res.getDigits(), "0");
 }
 
 TEST_F(BigIntTest, sqrtTest) {
@@ -442,5 +448,11 @@ TEST_F(BigIntTest, longCastTest) {
 
     const auto negSm = static_cast<long long>(negative);
     ASSERT_EQ(negSm, -1234);
+
+    for(long long i = -10000; i <= 10000; ++i) {
+        auto b = BigInt(i);
+        ASSERT_EQ(static_cast<long long>(b), i);
+        ASSERT_EQ(static_cast<long long>(b), i);
+    }
 }
 

@@ -523,6 +523,7 @@ BigInt &BigInt::operator/=(BigInt rhs) {
 
     if(getDigits() == rhs.getDigits()) {
         *this = BigInt(1);
+        setSign(sign);
         return *this;
     }
 
