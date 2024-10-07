@@ -13,6 +13,7 @@ public:
         BigInt res = a*input + b;
         res *= res;
         res -= number;
+        res /= a;
         return std::move(res);
     }
 
