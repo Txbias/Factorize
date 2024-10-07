@@ -54,8 +54,7 @@ PolyGenerator::PolyGenerator(const BigInt &number, const std::vector<BigInt> &ba
 }
 
 Polynomial PolyGenerator::next() {
-    if(b == -1) {
-        b= 0;
+    if(counter == 0) {
         for(const auto & BValue : BValues) {
             b += BValue;
         }
@@ -112,8 +111,6 @@ std::vector<std::pair<BigInt, BigInt>> PolyGenerator::findSolutions(const std::v
             sol2 *= aInv;
             sol2 %= factorBase[i];
 
-            assert((polynomial(sol1) % factorBase[i]) == 0);
-            assert((polynomial(sol2) % factorBase[i]) == 0);
 
             solutions[i] = {sol1, sol2};
             continue;
@@ -124,8 +121,6 @@ std::vector<std::pair<BigInt, BigInt>> PolyGenerator::findSolutions(const std::v
         BigInt sol1 = (lastSolutions[i].first + addFactor) % factorBase[i];
         BigInt sol2 = (lastSolutions[i].second + addFactor) % factorBase[i];
 
-        assert(polynomial(sol1) % factorBase[i] == 0);
-        assert(polynomial(sol2) % factorBase[i] == 0);
 
 
         solutions[i] = {sol1, sol2};

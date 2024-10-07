@@ -29,7 +29,7 @@ public:
 
 private:
     BigInt a, number;
-    BigInt b = -1;
+    BigInt b = 0;
 
     std::vector<std::vector<BigInt>> addFactors;
     std::vector<BigInt> factorBase;
