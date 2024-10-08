@@ -2,5 +2,5 @@
 cmake-build-debug
 cmake-build-release
 
-# exclude gtest source files
-test/lib
+# exclude included libraries
+external/*
