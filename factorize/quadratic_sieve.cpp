@@ -98,13 +98,15 @@ std::set<int> computeLinearDependency(const std::vector<std::vector<int>> &facto
 std::pair<BigInt, BigInt> computeSquareCongruence(const std::set<int> &square,
                      const std::vector<std::vector<int>> &factorizationExponents,
                      const std::vector<BigInt> &factorBase,
-                     const std::vector<std::pair<BigInt, BigInt>> &equivPairs) {
+                     const std::vector<std::pair<BigInt, BigInt>> &equivPairs,
+                     const BigInt &number) {
 
     BigInt square1 = 1;
     std::vector<int> cntExponents(factorBase.size());
     for(const int i : square) {
 
         square1 *= equivPairs[i].first;
+        square1 %= number;
 
         for(int j = 0; j < factorizationExponents[i].size(); ++j) {
             cntExponents[j] += factorizationExponents[i][j];
@@ -113,7 +115,8 @@ std::pair<BigInt, BigInt> computeSquareCongruence(const std::set<int> &square,
 
     BigInt square2 = 1;
     for(int i = 0; i < cntExponents.size(); ++i) {
-        square2 *= BigInt::exp(factorBase[i], cntExponents[i]/2,0);
+        square2 *= BigInt::exp(factorBase[i], cntExponents[i]/2, number);
+        square2 %= number;
     }
 
     if(square1 < square2) {
@@ -166,7 +169,7 @@ std::vector<std::pair<BigInt, BigInt>> sievePolynomial(const Polynomial& polynom
     const BigInt root = BigInt::sqrt(polynomial.number);
     for(int i = 0; i < sieve.size(); ++i) {
         BigInt cutoff = 1;
-        if(i != 0) cutoff = BigInt::log2(2*BigInt::abs(i-sieveRange)*root);
+        if(i-sieveRange != 0) cutoff = BigInt::log2(2*BigInt::abs(i-sieveRange)*root);
         cutoff *= 2;
         cutoff /= 3;
         if(sieve[i] < cutoff) continue;

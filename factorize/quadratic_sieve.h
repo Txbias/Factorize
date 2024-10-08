@@ -15,7 +15,8 @@ std::set<int> computeLinearDependency(const std::vector<std::vector<int>> &facto
 std::pair<BigInt, BigInt> computeSquareCongruence(const std::set<int> &square,
                      const std::vector<std::vector<int>> &factorizationExponents,
                      const std::vector<BigInt> &factorBase,
-                     const std::vector<std::pair<BigInt, BigInt>> &equivPairs);
+                     const std::vector<std::pair<BigInt, BigInt>> &equivPairs,
+                     const BigInt &number);
 
 std::vector<std::pair<BigInt, BigInt>> sievePolynomial(const Polynomial& polynomial,
                                                  const std::vector<std::pair<BigInt, BigInt>> &solutions,
